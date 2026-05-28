@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片比例换算工具</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        /* ── Dark theme (default) ── */
+        :root {
+            --bg-primary: #111119;
+            --bg-secondary: #161625;
+            --bg-tertiary: #1a1a30;
+            --bg-toolbar: #1c1c30;
+            --bg-panel: #18182c;
+            --bg-surface: rgba(255, 255, 255, 0.05);
+            --bg-surface-hover: rgba(255, 255, 255, 0.08);
+            --bg-input: rgba(0, 0, 0, 0.3);
+            --bg-input-focus: rgba(0, 0, 0, 0.45);
+            --border: rgba(255, 255, 255, 0.07);
+            --border-subtle: rgba(255, 255, 255, 0.04);
+            --border-input: rgba(139, 92, 246, 0.3);
+            --text-primary: #e8e8ed;
+            --text-secondary: #a0a0b0;
+            --text-muted: #6b6b80;
+            --accent: #8b5cf6;
+            --accent-light: #a78bfa;
+            --accent-bg: rgba(139, 92, 246, 0.1);
+            --accent-border: rgba(139, 92, 246, 0.2);
+            --btn-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --btn-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+            --btn-hover-shadow: 0 6px 25px rgba(99, 102, 241, 0.5);
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.12);
+            --table-bg: rgba(0, 0, 0, 0.2);
+            --table-hover: rgba(139, 92, 246, 0.07);
+            --scrollbar-thumb: rgba(255, 255, 255, 0.08);
+            --scrollbar-hover: rgba(255, 255, 255, 0.15);
+            --glow-a: rgba(139, 92, 246, 0.06);
+            --glow-b: rgba(99, 102, 241, 0.06);
+            --top-glow: rgba(139, 92, 246, 0.4);
+            --img-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+            --label-stroke: rgba(30, 30, 46, 0.95);
+            --boundary-color: #555;
+        }
+
+        /* ── Light theme ── */
+        [data-theme="light"] {
+            --bg-primary: #f0f0f8;
+            --bg-secondary: #eaeaf4;
+            --bg-tertiary: #e4e4f0;
+            --bg-toolbar: #ffffff;
+            --bg-panel: #fafaff;
+            --bg-surface: rgba(0, 0, 0, 0.04);
+            --bg-surface-hover: rgba(0, 0, 0, 0.07);
+            --bg-input: rgba(0, 0, 0, 0.04);
+            --bg-input-focus: rgba(0, 0, 0, 0.06);
+            --border: rgba(0, 0, 0, 0.08);
+            --border-subtle: rgba(0, 0, 0, 0.05);
+            --border-input: rgba(99, 102, 241, 0.25);
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a60;
+            --text-muted: #7a7a90;
+            --accent: #6366f1;
+            --accent-light: #4f46e5;
+            --accent-bg: rgba(99, 102, 241, 0.06);
+            --accent-border: rgba(99, 102, 241, 0.18);
+            --btn-gradient: linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #8b5cf6 100%);
+            --btn-shadow: 0 2px 10px rgba(99, 102, 241, 0.2);
+            --btn-hover-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+            --danger: #dc2626;
+            --danger-bg: rgba(220, 38, 38, 0.06);
+            --table-bg: rgba(0, 0, 0, 0.025);
+            --table-hover: rgba(99, 102, 241, 0.05);
+            --scrollbar-thumb: rgba(0, 0, 0, 0.1);
+            --scrollbar-hover: rgba(0, 0, 0, 0.18);
+            --glow-a: rgba(99, 102, 241, 0.03);
+            --glow-b: rgba(139, 92, 246, 0.03);
+            --top-glow: rgba(99, 102, 241, 0.25);
+            --img-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+            --label-stroke: rgba(255, 255, 255, 0.92);
+            --boundary-color: #b0b0b0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(160deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background .35s ease, color .25s ease;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            flex-shrink: 0;
+            padding: 14px 28px;
+            background: var(--bg-toolbar);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 10;
+        }
+
+        .toolbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--top-glow), transparent);
+        }
+
+        .upload-area {
+            position: relative;
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-btn {
+            background: var(--btn-gradient);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 22px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--btn-shadow);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--btn-hover-shadow);
+        }
+
+        .upload-btn:active {
+            transform: translateY(0) scale(.98);
+        }
+
+        .info-bar {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .info-bar span {
+            white-space: nowrap;
+            padding: 4px 12px;
+            background: var(--bg-surface);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            font-size: 12px;
+        }
+
+        .info-bar .val {
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        .config {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-left: auto;
+            padding: 10px 16px;
+            background: var(--bg-surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .config label {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .config input {
+            width: 72px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-input);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 10px;
+            text-align: center;
+            transition: all .25s;
+        }
+
+        .config input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-bg);
+            background: var(--bg-input-focus);
+        }
+
+        .config input.invalid {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 3px var(--danger-bg);
+        }
+
+        /* ── Theme toggle ── */
+        .theme-toggle {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all .25s;
+            flex-shrink: 0;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-surface-hover);
+            transform: scale(1.08);
+        }
+
+        /* ── Main workspace ── */
+        .workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .viewport {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px;
+            position: relative;
+        }
+
+        .viewport::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 20%, var(--glow-a) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, var(--glow-b) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            gap: 20px;
+            user-select: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .empty-state .icon {
+            width: 96px;
+            height: 96px;
+            background: var(--accent-bg);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 44px;
+            border: 1px solid var(--accent-border);
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-muted);
+        }
+
+        .empty-state .hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: var(--accent-bg);
+            border: 1px solid var(--accent-border);
+            border-radius: 12px;
+            padding: 12px 24px;
+            margin-top: 4px;
+        }
+
+        .image-wrapper {
+            position: relative;
+            display: none;
+            overflow: visible;
+            margin-left: 88px;
+            margin-top: 36px;
+            border-radius: 8px;
+            transition: transform .3s ease;
+        }
+
+        .image-wrapper.visible {
+            display: inline-block;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .image-wrapper img {
+            display: block;
+            max-width: calc(100vw - 520px - 88px - 64px);
+            max-height: calc(100vh - 220px);
+            user-select: none;
+            -webkit-user-drag: none;
+            border-radius: 8px;
+            box-shadow: var(--img-shadow);
+        }
+
+        .overlay-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        .overlay-svg .split-line {
+            pointer-events: none;
+            stroke-width: 2;
+            stroke-dasharray: 8 4;
+            filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.15));
+        }
+
+        .overlay-svg .boundary-line {
+            pointer-events: none;
+            stroke-width: 1;
+            stroke-dasharray: 4 4;
+        }
+
+        .overlay-svg .line-hitarea {
+            pointer-events: stroke;
+            cursor: grab;
+            stroke: transparent;
+            stroke-width: 16;
+        }
+
+        .overlay-svg .line-hitarea:hover {
+            stroke: rgba(139, 92, 246, 0.12);
+            stroke-width: 16;
+        }
+
+        [data-theme="light"] .overlay-svg .line-hitarea:hover {
+            stroke: rgba(99, 102, 241, 0.1);
+        }
+
+        .overlay-svg .boundary-label {
+            font-size: 10px;
+            font-weight: 500;
+            pointer-events: none;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        .overlay-svg .side-label {
+            font-size: 11px;
+            font-weight: 600;
+            paint-order: stroke;
+            stroke-width: 3px;
+            fill: currentColor;
+            pointer-events: none;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        .overlay-svg .label-handle {
+            pointer-events: all;
+            cursor: grab;
+        }
+
+        .overlay-svg .label-handle:hover rect.label-bg {
+            opacity: .4 !important;
+        }
+
+        .overlay-svg .label-handle.dragging {
+            cursor: grabbing;
+        }
+
+        .overlay-svg .label-handle.dragging rect.label-bg {
+            opacity: .55 !important;
+        }
+
+        .overlay-svg .side-del-btn {
+            pointer-events: all;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            opacity: .5;
+            transition: opacity .15s;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        .overlay-svg .side-del-btn:hover {
+            opacity: 1;
+        }
+
+        .line-controls {
+            margin-top: 20px;
+            display: none;
+            gap: 12px;
+        }
+
+        .line-controls.visible {
+            display: flex;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .line-controls button {
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .25s;
+        }
+
+        .line-controls button:hover {
+            background: var(--btn-gradient);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: var(--btn-shadow);
+            transform: translateY(-1px);
+        }
+
+        .line-controls button:active {
+            transform: scale(.97);
+        }
+
+        .line-controls button:disabled {
+            opacity: .35;
+            cursor: default;
+        }
+
+        .line-controls button:last-child:hover {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        /* ── Side panel ── */
+        .data-panel {
+            width: 420px;
+            flex-shrink: 0;
+            border-left: 1px solid var(--border);
+            background: var(--bg-panel);
+            overflow-y: auto;
+            padding: 0;
+            display: none;
+        }
+
+        .data-panel.visible {
+            display: block;
+            animation: slideInRight 0.4s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .panel-section {
+            margin-bottom: 0;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .panel-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .panel-section h3 {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .seg-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 12px;
+            background: var(--table-bg);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .seg-table th {
+            text-align: left;
+            padding: 10px 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .seg-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            transition: background .15s;
+        }
+
+        .seg-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .seg-table tr:hover td {
+            background: var(--table-hover);
+        }
+
+        .seg-table .del-seg-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 15px;
+            padding: 3px 8px;
+            opacity: .4;
+            border-radius: 5px;
+            transition: all .15s;
+        }
+
+        .seg-table .del-seg-btn:hover {
+            opacity: 1;
+            background: var(--danger-bg);
+        }
+
+        .seg-table .dl-btn {
+            background: var(--accent-bg);
+            border: 1px solid var(--accent-border);
+            color: var(--accent-light);
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            transition: all .15s;
+        }
+
+        .seg-table .dl-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .seg-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .num {
+            font-variant-numeric: tabular-nums;
+            color: var(--text-primary);
+        }
+
+        .seg-summary {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-subtle);
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .seg-summary .val {
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--scrollbar-hover);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="toolbar">
+        <div class="upload-area">
+            <button class="upload-btn">📁 上传图片</button>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        <div class="info-bar" id="infoBar">
+            <span>等待上传图片...</span>
+        </div>
+        <div class="config">
+            <label>目标宽度 <input type="number" id="targetWidth" value="375" min="1"></label>
+            <label>rem基准 <input type="number" id="remBase" value="37.5" min="0.01" step="0.1"></label>
+        </div>
+        <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
+    </div>
+
+    <div class="workspace">
+        <div class="viewport">
+            <div class="empty-state" id="emptyState">
+                <div class="icon">🖼️</div>
+                <h3>图片比例换算工具</h3>
+                <p>拖拽图片到此处<br>或粘贴 (Ctrl+V)<br>或点击按钮上传</p>
+                <div class="hint">支持 PNG、JPG、GIF、WebP 等格式</div>
+            </div>
+            <div class="image-wrapper" id="imageWrapper">
+                <img id="theImage" alt="">
+                <svg class="overlay-svg" id="overlay"></svg>
+            </div>
+            <div class="line-controls" id="lineControls">
+                <button id="addHLine">+ 水平分割线</button>
+                <button id="addVLine">+ 垂直分割线</button>
+                <button id="clearLines">清除分割线</button>
+            </div>
+        </div>
+        <aside class="data-panel" id="dataPanel">
+            <div class="panel-section" id="hSection">
+                <h3>📐 水平分段（高度）</h3>
+                <div id="hContent"></div>
+            </div>
+            <div class="panel-section" id="vSection">
+                <h3>↔ 垂直分段（宽度）</h3>
+                <div id="vContent"></div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // ── Color palette for user lines ──
+        const COLORS = [
+            '#6366f1', '#06b6d4', '#10b981', '#f59e0b',
+            '#ec4899', '#8b5cf6', '#14b8a6', '#f97316',
+            '#a855f7', '#3b82f6', '#ef4444', '#22c55e'
+        ];
+        // Segment fill colors (semi-transparent)
+        const SEG_FILLS = [
+            '#6366f118', '#06b6d418', '#10b98118', '#f59e0b18',
+            '#ec489918', '#8b5cf618', '#14b8a618', '#f9731618',
+            '#a855f718', '#3b82f618', '#ef444418', '#22c55e18'
+        ];
+
+        // ── Theme ──
+        const $themeToggle = document.getElementById('themeToggle');
+        let currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        updateThemeIcon();
+
+        $themeToggle.addEventListener('click', () => {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            localStorage.setItem('theme', currentTheme);
+            updateThemeIcon();
+            renderAll();
+        });
+
+        function updateThemeIcon() {
+            $themeToggle.textContent = currentTheme === 'dark' ? '🌙' : '☀️';
+        }
+
+        function getBoundaryColor() {
+            return currentTheme === 'dark' ? '#555' : '#b0b0b0';
+        }
+
+        function getLabelStroke() {
+            return currentTheme === 'dark' ? 'rgba(30, 30, 46, 0.95)' : 'rgba(255, 255, 255, 0.92)';
+        }
+
+        function getLabelFill() {
+            return currentTheme === 'dark' ? '#a1a1aa' : '#71717a';
+        }
+
+        // ── State ──
+        const state = {
+            image: null,
+            imageFile: null,
+            targetWidth: 375,
+            remBase: 37.5,
+            hLines: [],
+            vLines: [],
+            nextId: 1,
+            displayScale: 1,
+            hDisplayScale: 1
+        };
+
+        // ── DOM refs ──
+        const $img = document.getElementById('theImage');
+        const $wrapper = document.getElementById('imageWrapper');
+        const $overlay = document.getElementById('overlay');
+        const $empty = document.getElementById('emptyState');
+        const $fileInput = document.getElementById('fileInput');
+        const $infoBar = document.getElementById('infoBar');
+        const $targetWidth = document.getElementById('targetWidth');
+        const $remBase = document.getElementById('remBase');
+        const $addH = document.getElementById('addHLine');
+        const $addV = document.getElementById('addVLine');
+        const $clearLines = document.getElementById('clearLines');
+        const $lineControls = document.getElementById('lineControls');
+        const $dataPanel = document.getElementById('dataPanel');
+        const $hContent = document.getElementById('hContent');
+        const $vContent = document.getElementById('vContent');
+
+        // ── Helpers ──
+        function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+        function fmt(n, d) { return n.toFixed(d); }
+        function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+        function getScale() {
+            if (!state.image) return 1;
+            return state.targetWidth / state.image.naturalWidth;
+        }
+        function getConvertedWidth() { return state.image ? state.image.naturalWidth * getScale() : 0; }
+        function getConvertedHeight() { return state.image ? state.image.naturalHeight * getScale() : 0; }
+        function getUserLines(lines) { return lines.filter(l => !l.boundary); }
+
+        function computeSegments(lines, totalDim) {
+            const sorted = [...lines].sort((a, b) => a.pos - b.pos);
+            const segs = [];
+            let prev = 0;
+            for (let i = 0; i < sorted.length; i++) {
+                const cur = sorted[i].pos;
+                const bottomLine = sorted[i];
+                if (cur > prev) {
+                    segs.push({ start: prev, end: cur, size: cur - prev, bottomLine });
+                }
+                prev = cur;
+            }
+            if (prev < totalDim) {
+                segs.push({ start: prev, end: totalDim, size: totalDim - prev, bottomLine: null });
+            }
+            return segs;
+        }
+
+        // ── Image loading ──
+        function loadImage(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    state.image = img;
+                    state.imageFile = file;
+                    $img.src = img.src;
+                    $wrapper.classList.add('visible');
+                    $empty.style.display = 'none';
+                    $lineControls.classList.add('visible');
+                    $dataPanel.classList.add('visible');
+
+                    // Reset user lines, add boundaries
+                    state.hLines = [
+                        { id: state.nextId++, pos: 0, color: BOUNDARY_COLOR, boundary: true },
+                        { id: state.nextId++, pos: img.naturalHeight, color: BOUNDARY_COLOR, boundary: true }
+                    ];
+                    state.vLines = [
+                        { id: state.nextId++, pos: 0, color: BOUNDARY_COLOR, boundary: true },
+                        { id: state.nextId++, pos: img.naturalWidth, color: BOUNDARY_COLOR, boundary: true }
+                    ];
+                    renderAll();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        $fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) loadImage(e.target.files[0]);
+        });
+
+        // Drag and drop
+        $wrapper.parentElement.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); });
+        $wrapper.parentElement.addEventListener('drop', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) loadImage(file);
+        });
+
+        // Paste
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    loadImage(item.getAsFile());
+                    break;
+                }
+            }
+        });
+
+        // Config inputs
+        $targetWidth.addEventListener('input', () => {
+            const v = parseFloat($targetWidth.value);
+            if (v > 0) { state.targetWidth = v; $targetWidth.classList.remove('invalid'); renderAll(); }
+            else $targetWidth.classList.add('invalid');
+        });
+        $remBase.addEventListener('input', () => {
+            const v = parseFloat($remBase.value);
+            if (v > 0) { state.remBase = v; $remBase.classList.remove('invalid'); renderAll(); }
+            else $remBase.classList.add('invalid');
+        });
+
+        // Resize observer
+        const ro = new ResizeObserver(() => updateOverlaySize());
+        ro.observe($img);
+
+        function updateOverlaySize() {
+            if (!state.image) return;
+            const rect = $img.getBoundingClientRect();
+            if (rect.width === 0) return;
+            $overlay.setAttribute('width', rect.width);
+            $overlay.setAttribute('height', rect.height);
+            $overlay.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+            state.displayScale = rect.width / state.image.naturalWidth;
+            state.hDisplayScale = rect.height / state.image.naturalHeight;
+            renderOverlay();
+        }
+
+        // ── Line management ──
+        const BOUNDARY_COLOR = '#555';
+
+        $addH.addEventListener('click', () => {
+            if (!state.image) return;
+            const userH = getUserLines(state.hLines);
+            const userV = getUserLines(state.vLines);
+            const colorIdx = (userH.length + userV.length) % COLORS.length;
+            state.hLines.push({
+                id: state.nextId++,
+                pos: Math.round(state.image.naturalHeight / 2),
+                color: COLORS[colorIdx]
+            });
+            renderAll();
+        });
+
+        $addV.addEventListener('click', () => {
+            if (!state.image) return;
+            const userH = getUserLines(state.hLines);
+            const userV = getUserLines(state.vLines);
+            const colorIdx = (userH.length + userV.length) % COLORS.length;
+            state.vLines.push({
+                id: state.nextId++,
+                pos: Math.round(state.image.naturalWidth / 2),
+                color: COLORS[colorIdx]
+            });
+            renderAll();
+        });
+
+        $clearLines.addEventListener('click', () => {
+            state.hLines = state.hLines.filter(l => l.boundary);
+            state.vLines = state.vLines.filter(l => l.boundary);
+            renderAll();
+        });
+
+        function removeLine(id) {
+            state.hLines = state.hLines.filter(l => l.id !== id);
+            state.vLines = state.vLines.filter(l => l.id !== id);
+            renderAll();
+        }
+
+        // ── Download segment ──
+        function downloadSegment(axis, segIndex) {
+            if (!state.image) return;
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            if (axis === 'h') {
+                const segs = computeSegments(state.hLines, state.image.naturalHeight);
+                const seg = segs[segIndex];
+                if (!seg) return;
+                canvas.width = state.image.naturalWidth;
+                canvas.height = Math.round(seg.size);
+                ctx.drawImage(state.image,
+                    0, Math.round(seg.start), state.image.naturalWidth, Math.round(seg.size),
+                    0, 0, canvas.width, canvas.height
+                );
+            } else {
+                const segs = computeSegments(state.vLines, state.image.naturalWidth);
+                const seg = segs[segIndex];
+                if (!seg) return;
+                canvas.width = Math.round(seg.size);
+                canvas.height = state.image.naturalHeight;
+                ctx.drawImage(state.image,
+                    Math.round(seg.start), 0, Math.round(seg.size), state.image.naturalHeight,
+                    0, 0, canvas.width, canvas.height
+                );
+            }
+
+            const link = document.createElement('a');
+            link.download = `${axis}${segIndex + 1}_${state.imageFile?.name || 'segment'}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // ── Drag handling ──
+        let dragging = null;
+
+        $overlay.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target.classList && target.classList.contains('side-del-btn')) {
+                e.stopPropagation();
+                removeLine(parseInt(target.dataset.lineId));
+                return;
+            }
+        });
+
+        $overlay.addEventListener('mousedown', (e) => {
+            const target = e.target;
+            if (target.classList && target.classList.contains('side-del-btn')) return;
+            let lineId, isH;
+            const hitArea = target.closest('.line-hitarea') || target.closest('.label-handle');
+            if (hitArea) {
+                lineId = parseInt(hitArea.dataset.lineId);
+                isH = hitArea.dataset.axis === 'h';
+            }
+            if (!lineId && target.classList && target.classList.contains('split-line')) {
+                lineId = parseInt(target.dataset.lineId);
+                isH = target.dataset.axis === 'h';
+            }
+            if (!lineId) return;
+            const line = isH
+                ? state.hLines.find(l => l.id === lineId)
+                : state.vLines.find(l => l.id === lineId);
+            if (!line || line.boundary) return;
+            e.preventDefault();
+            dragging = { lineId, isH, startPos: line.pos, startMouse: isH ? e.clientY : e.clientX };
+            $overlay.querySelectorAll('.split-line').forEach(el => {
+                if (parseInt(el.dataset.lineId) === lineId) el.classList.add('dragging');
+            });
+            $overlay.querySelectorAll('.label-handle').forEach(el => {
+                if (parseInt(el.dataset.lineId) === lineId) el.classList.add('dragging');
+            });
+            document.addEventListener('mousemove', onDragMove);
+            document.addEventListener('mouseup', onDragEnd);
+        });
+
+        function onDragMove(e) {
+            if (!dragging) return;
+            const { lineId, isH, startPos, startMouse } = dragging;
+            const deltaScreen = isH ? (e.clientY - startMouse) : (e.clientX - startMouse);
+            const deltaOriginal = deltaScreen / state.displayScale;
+            const maxDim = isH ? state.image.naturalHeight : state.image.naturalWidth;
+            const newPos = clamp(startPos + deltaOriginal, 2, maxDim - 2);
+            const lines = isH ? state.hLines : state.vLines;
+            const line = lines.find(l => l.id === lineId);
+            if (line) line.pos = Math.round(newPos);
+            scheduleRender();
+        }
+
+        function onDragEnd() {
+            if (!dragging) return;
+            $overlay.querySelectorAll('.split-line.dragging').forEach(el => el.classList.remove('dragging'));
+            $overlay.querySelectorAll('.label-handle.dragging').forEach(el => el.classList.remove('dragging'));
+            dragging = null;
+            document.removeEventListener('mousemove', onDragMove);
+            document.removeEventListener('mouseup', onDragEnd);
+            renderAll();
+        }
+
+        let rafId = null;
+        function scheduleRender() {
+            if (rafId) return;
+            rafId = requestAnimationFrame(() => {
+                renderOverlay();
+                renderPanel();
+                rafId = null;
+            });
+        }
+
+        // ── Render all ──
+        function renderAll() {
+            renderInfo();
+            renderOverlay();
+            renderPanel();
+        }
+
+        // ── Info bar ──
+        function renderInfo() {
+            if (!state.image) {
+                $infoBar.innerHTML = '<span>未加载图片</span>';
+                return;
+            }
+            const w = state.image.naturalWidth;
+            const h = state.image.naturalHeight;
+            const g = gcd(w, h);
+            const ratio = `${w / g}:${h / g}`;
+            const sizeKB = state.imageFile ? (state.imageFile.size / 1024).toFixed(1) : '?';
+            const scale = getScale();
+            $infoBar.innerHTML = `
+                <span>原始: <b class="val">${w}</b>×<b class="val">${h}</b></span>
+                <span>比例: <b class="val">${ratio}</b></span>
+                <span>大小: <b class="val">${sizeKB}KB</b></span>
+                <span>缩放比: <b class="val">${fmt(scale, 4)}</b></span>
+                <span>转换后: <b class="val">${fmt(getConvertedWidth(), 1)}</b>×<b class="val">${fmt(getConvertedHeight(), 1)}</b></span>
+            `;
+        }
+
+        // ── Overlay rendering ──
+        function renderOverlay() {
+            if (!state.image) return;
+            const ds = state.displayScale;
+            const scale = getScale();
+            const rw = state.image.naturalWidth * state.displayScale;
+            const rh = state.image.naturalHeight * state.hDisplayScale;
+            const hs = state.hDisplayScale;
+            const boundaryColor = getBoundaryColor();
+            const labelStroke = getLabelStroke();
+            const labelFill = getLabelFill();
+
+            let svg = '';
+
+            // Segment fill rects
+            const hSegs = computeSegments(state.hLines, state.image.naturalHeight);
+            const vSegs = computeSegments(state.vLines, state.image.naturalWidth);
+
+            for (let i = 0; i < hSegs.length; i++) {
+                const seg = hSegs[i];
+                const y1 = seg.start * hs;
+                const y2 = seg.end * hs;
+                const fill = SEG_FILLS[i % SEG_FILLS.length];
+                svg += `<rect x="0" y="${y1}" width="${rw}" height="${y2 - y1}" fill="${fill}" pointer-events="none" class="seg-rect-h" data-seg-idx="${i}"/>`;
+            }
+
+            for (let i = 0; i < vSegs.length; i++) {
+                const seg = vSegs[i];
+                const x1 = seg.start * ds;
+                const x2 = seg.end * ds;
+                const fill = SEG_FILLS[i % SEG_FILLS.length];
+                svg += `<rect x="${x1}" y="0" width="${x2 - x1}" height="${rh}" fill="${fill}" pointer-events="none" class="seg-rect-v" data-seg-idx="${i}"/>`;
+            }
+
+            // Boundary lines
+            for (const line of state.hLines) {
+                const y = line.pos * hs;
+                if (line.boundary) {
+                    svg += `<line class="boundary-line" x1="0" y1="${y}" x2="${rw}" y2="${y}" stroke="${boundaryColor}" />`;
+                    const convY = line.pos * scale;
+                    svg += `<text class="boundary-label" x="-8" y="${y + 4}" text-anchor="end" fill="${labelFill}">${fmt(convY, 1)}</text>`;
+                }
+            }
+            for (const line of state.vLines) {
+                const x = line.pos * ds;
+                if (line.boundary) {
+                    svg += `<line class="boundary-line" x1="${x}" y1="0" x2="${x}" y2="${rh}" stroke="${boundaryColor}" />`;
+                    const convX = line.pos * scale;
+                    svg += `<text class="boundary-label" x="${x}" y="-6" text-anchor="middle" fill="${labelFill}">${fmt(convX, 1)}</text>`;
+                }
+            }
+
+            // User lines (interactive, colored)
+            for (const line of state.hLines) {
+                if (line.boundary) continue;
+                const y = line.pos * hs;
+                svg += `<line class="split-line" data-line-id="${line.id}" data-axis="h" x1="0" y1="${y}" x2="${rw}" y2="${y}" stroke="${line.color}" />`;
+                svg += `<line class="line-hitarea" data-line-id="${line.id}" data-axis="h" x1="0" y1="${y}" x2="${rw}" y2="${y}" stroke="transparent" stroke-width="14" />`;
+                const convY = line.pos * scale;
+                const labelText = fmt(convY, 1);
+                svg += `<g class="label-handle" data-line-id="${line.id}" data-axis="h">
+                    <rect class="label-bg" x="-58" y="${y - 10}" width="50" height="20" rx="3" fill="${line.color}" opacity=".15" />
+                    <text class="side-label" x="-10" y="${y + 4}" text-anchor="end" fill="${line.color}" stroke="${labelStroke}">${labelText}</text>
+                    <text class="side-del-btn" data-line-id="${line.id}" x="-62" y="${y + 5}" text-anchor="end" fill="${line.color}">×</text>
+                </g>`;
+            }
+            for (const line of state.vLines) {
+                if (line.boundary) continue;
+                const x = line.pos * ds;
+                svg += `<line class="split-line" data-line-id="${line.id}" data-axis="v" x1="${x}" y1="0" x2="${x}" y2="${rh}" stroke="${line.color}" />`;
+                svg += `<line class="line-hitarea" data-line-id="${line.id}" data-axis="v" x1="${x}" y1="0" x2="${x}" y2="${rh}" stroke="transparent" stroke-width="14" />`;
+                const convX = line.pos * scale;
+                const labelText = fmt(convX, 1);
+                svg += `<g class="label-handle" data-line-id="${line.id}" data-axis="v">
+                    <rect class="label-bg" x="${x - 28}" y="-24" width="56" height="20" rx="3" fill="${line.color}" opacity=".15" />
+                    <text class="side-label" x="${x}" y="-10" text-anchor="middle" fill="${line.color}" stroke="${labelStroke}">${labelText}</text>
+                    <text class="side-del-btn" data-line-id="${line.id}" x="${x + 30}" y="-10" text-anchor="start" fill="${line.color}">×</text>
+                </g>`;
+            }
+
+            $overlay.innerHTML = svg;
+        }
+
+        // ── Panel rendering ──
+        function renderPanel() {
+            if (!state.image) return;
+            const scale = getScale();
+            const cW = getConvertedWidth();
+            const cH = getConvertedHeight();
+            const remBase = state.remBase;
+            const nh = state.image.naturalHeight;
+            const nw = state.image.naturalWidth;
+
+            // Horizontal segments
+            {
+                const segs = computeSegments(state.hLines, nh);
+                let html = `<table class="seg-table"><thead><tr>
+                    <th></th><th>分段</th><th>原始px</th><th>换算px</th><th>占比</th><th>rem</th><th></th>
+                </tr></thead><tbody>`;
+                for (let i = 0; i < segs.length; i++) {
+                    const seg = segs[i];
+                    const origPx = seg.size;
+                    const convPx = origPx * scale;
+                    const pct = cH > 0 ? (convPx / cH * 100) : 0;
+                    const rem = convPx / remBase;
+                    const color = COLORS[i % COLORS.length];
+                    const delHtml = seg.bottomLine && !seg.bottomLine.boundary
+                        ? `<button class="del-seg-btn" data-line-id="${seg.bottomLine.id}" title="删除此线">×</button>`
+                        : '';
+                    html += `<tr data-seg-h="${i}">
+                        <td><span class="color-dot" style="background:${color}"></span></td>
+                        <td class="seg-name">H${i + 1}</td>
+                        <td class="num">${fmt(origPx, 1)}</td>
+                        <td class="num">${fmt(convPx, 1)}</td>
+                        <td class="num">${fmt(pct, 2)}%</td>
+                        <td class="num">${fmt(rem, 3)}</td>
+                        <td><button class="dl-btn" data-axis="h" data-idx="${i}" title="下载此段">⬇</button>${delHtml}</td>
+                    </tr>`;
+                }
+                html += '</tbody></table>';
+                html += `<div class="seg-summary">总高度: <span class="val">${fmt(nh, 1)}px</span> → <span class="val">${fmt(cH, 1)}px</span></div>`;
+                $hContent.innerHTML = html;
+
+                $hContent.querySelectorAll('tr[data-seg-h]').forEach(tr => {
+                    tr.addEventListener('mouseenter', () => highlightSegment('h', parseInt(tr.dataset.segH)));
+                    tr.addEventListener('mouseleave', () => clearHighlight());
+                });
+                $hContent.querySelectorAll('.del-seg-btn').forEach(btn => {
+                    btn.addEventListener('click', () => removeLine(parseInt(btn.dataset.lineId)));
+                });
+                $hContent.querySelectorAll('.dl-btn[data-axis="h"]').forEach(btn => {
+                    btn.addEventListener('click', () => downloadSegment('h', parseInt(btn.dataset.idx)));
+                });
+            }
+
+            // Vertical segments
+            {
+                const segs = computeSegments(state.vLines, nw);
+                let html = `<table class="seg-table"><thead><tr>
+                    <th></th><th>分段</th><th>原始px</th><th>换算px</th><th>占比</th><th>rem</th><th></th>
+                </tr></thead><tbody>`;
+                for (let i = 0; i < segs.length; i++) {
+                    const seg = segs[i];
+                    const origPx = seg.size;
+                    const convPx = origPx * scale;
+                    const pct = cW > 0 ? (convPx / cW * 100) : 0;
+                    const rem = convPx / remBase;
+                    const color = COLORS[i % COLORS.length];
+                    const delHtml = seg.bottomLine && !seg.bottomLine.boundary
+                        ? `<button class="del-seg-btn" data-line-id="${seg.bottomLine.id}" title="删除此线">×</button>`
+                        : '';
+                    html += `<tr data-seg-v="${i}">
+                        <td><span class="color-dot" style="background:${color}"></span></td>
+                        <td class="seg-name">V${i + 1}</td>
+                        <td class="num">${fmt(origPx, 1)}</td>
+                        <td class="num">${fmt(convPx, 1)}</td>
+                        <td class="num">${fmt(pct, 2)}%</td>
+                        <td class="num">${fmt(rem, 3)}</td>
+                        <td><button class="dl-btn" data-axis="v" data-idx="${i}" title="下载此段">⬇</button>${delHtml}</td>
+                    </tr>`;
+                }
+                html += '</tbody></table>';
+                html += `<div class="seg-summary">总宽度: <span class="val">${fmt(nw, 1)}px</span> → <span class="val">${fmt(cW, 1)}px</span></div>`;
+                $vContent.innerHTML = html;
+
+                $vContent.querySelectorAll('tr[data-seg-v]').forEach(tr => {
+                    tr.addEventListener('mouseenter', () => highlightSegment('v', parseInt(tr.dataset.segV)));
+                    tr.addEventListener('mouseleave', () => clearHighlight());
+                });
+                $vContent.querySelectorAll('.del-seg-btn').forEach(btn => {
+                    btn.addEventListener('click', () => removeLine(parseInt(btn.dataset.lineId)));
+                });
+                $vContent.querySelectorAll('.dl-btn[data-axis="v"]').forEach(btn => {
+                    btn.addEventListener('click', () => downloadSegment('v', parseInt(btn.dataset.idx)));
+                });
+            }
+        }
+
+        // ── Segment highlight ──
+        function highlightSegment(axis, idx) {
+            clearHighlight();
+            if (!state.image) return;
+            const selector = axis === 'h'
+                ? `.seg-rect-h[data-seg-idx="${idx}"]`
+                : `.seg-rect-v[data-seg-idx="${idx}"]`;
+            const rect = $overlay.querySelector(selector);
+            if (rect) {
+                const orig = rect.getAttribute('fill');
+                const color = COLORS[idx % COLORS.length];
+                rect.setAttribute('fill', color + '55');
+                rect._origFill = orig;
+            }
+        }
+
+        function clearHighlight() {
+            $overlay.querySelectorAll('.seg-rect-h, .seg-rect-v').forEach(rect => {
+                if (rect._origFill) {
+                    rect.setAttribute('fill', rect._origFill);
+                    delete rect._origFill;
+                }
+            });
+        }
+
+        // ── Init ──
+        renderAll();
+    </script>
+</body>
+
+</html>
