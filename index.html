@@ -81,7 +81,7 @@
             --top-glow: rgba(99, 102, 241, 0.25);
             --img-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
             --label-stroke: rgba(255, 255, 255, 0.92);
-            --boundary-color: #b0b0b0;
+            --boundary-color: #555555;
         }
 
         * {
@@ -746,7 +746,14 @@
             document.documentElement.setAttribute('data-theme', currentTheme);
             localStorage.setItem('theme', currentTheme);
             updateThemeIcon();
-            renderAll();
+            // Theme change triggers layout — wait for image to settle then redraw
+            queueMicrotask(() => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        renderAll();
+                    });
+                });
+            });
         });
 
         function updateThemeIcon() {
@@ -754,7 +761,7 @@
         }
 
         function getBoundaryColor() {
-            return currentTheme === 'dark' ? '#555' : '#b0b0b0';
+            return '#555';
         }
 
         function getLabelStroke() {
@@ -849,7 +856,15 @@
                         { id: state.nextId++, pos: 0, color: BOUNDARY_COLOR, boundary: true },
                         { id: state.nextId++, pos: img.naturalWidth, color: BOUNDARY_COLOR, boundary: true }
                     ];
-                    renderAll();
+
+                    // ResizeObserver will handle the first layout automatically;
+                    // we don't render here since the image hasn't completed layout yet
+                    // and displayScale would be wrong (still at initial value 1)
+                    renderInfo();
+                    renderPanel();
+                    // overlay will be rendered when ResizeObserver fires
+                    // (the observer on $img was attached at init time, so it fires
+                    // when image src changes and layout is computed)
                 };
                 img.src = e.target.result;
             };
@@ -898,14 +913,15 @@
 
         function updateOverlaySize() {
             if (!state.image) return;
-            const rect = $img.getBoundingClientRect();
-            if (rect.width === 0) return;
-            $overlay.setAttribute('width', rect.width);
-            $overlay.setAttribute('height', rect.height);
-            $overlay.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
-            state.displayScale = rect.width / state.image.naturalWidth;
-            state.hDisplayScale = rect.height / state.image.naturalHeight;
-            renderOverlay();
+            const rw = $img.offsetWidth;
+            const rh = $img.offsetHeight;
+            if (rw === 0 || rh === 0) return;
+            state.displayScale = rw / state.image.naturalWidth;
+            state.hDisplayScale = rh / state.image.naturalHeight;
+            $overlay.setAttribute('width', rw);
+            $overlay.setAttribute('height', rh);
+            $overlay.setAttribute('viewBox', `0 0 ${rw} ${rh}`);
+            renderOverlay(rw, rh);
         }
 
         // ── Line management ──
@@ -1061,7 +1077,7 @@
         // ── Render all ──
         function renderAll() {
             renderInfo();
-            renderOverlay();
+            renderOverlay(); // renderOverlay reads rw/rh from $img.offsetWidth (0 if not laid out yet → guard skips)
             renderPanel();
         }
 
@@ -1087,13 +1103,17 @@
         }
 
         // ── Overlay rendering ──
-        function renderOverlay() {
+        function renderOverlay(rw, rh) {
             if (!state.image) return;
-            const ds = state.displayScale;
+            // Use passed dimensions (from updateOverlaySize / ResizeObserver) when available
+            if (rw === undefined) {
+                rw = $img.offsetWidth;
+                rh = $img.offsetHeight;
+            }
+            if (rw === 0 || rh === 0) return;
+            const ds = rw / state.image.naturalWidth;
+            const hs = rh / state.image.naturalHeight;
             const scale = getScale();
-            const rw = state.image.naturalWidth * state.displayScale;
-            const rh = state.image.naturalHeight * state.hDisplayScale;
-            const hs = state.hDisplayScale;
             const boundaryColor = getBoundaryColor();
             const labelStroke = getLabelStroke();
             const labelFill = getLabelFill();
